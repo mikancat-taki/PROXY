@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>日本語プロキシ / 検索</title>
+<link rel="icon" href="/assets/icons/favicon.png" />
+<link rel="apple-touch-icon" sizes="192x192" href="/assets/icons/app_icon_192.png">
+<link rel="manifest" href="#">
+<meta name="description" content="軽量・日本語対応のプロキシ検索フロントエンドです" />
+<link rel="stylesheet" href="/frontend/style.css">
+</head>
+<body>
+<main class="container">
+<header class="search-header">
+<img src="/assets/icons/app_icon_192.png" alt="app" class="logo">
+<div class="search-box">
+<input id="q" placeholder="検索ワードかURLを入力（例: 東京 天気 または https://example.com）" />
+<button id="go">検索 / 開く</button>
+</div>
+</header>
+
+
+<section id="results" class="results"></section>
+
+
+<section id="viewer" class="viewer" hidden>
+<div class="viewer-controls">
+<button id="back">戻る</button>
+<a id="open-original" target="_blank">元サイトを新しいタブで開く</a>
+<button id="close-view">閉じる</button>
+</div>
+<div id="frame" class="frame"></div>
+</section>
+
+
+<footer class="footer">日本語プロキシ — 軽量 &amp; プライバシー重視</footer>
+</main>
+
+
+<script src="/frontend/main.js"></script>
+</body>
+</html>
