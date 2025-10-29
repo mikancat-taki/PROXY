@@ -1,14 +1,13 @@
 services:
   - type: web
-    name: jp-browser-proxy
+    name: proxy-browser
     env: node
-    buildCommand: cd backend && npm install
-    startCommand: cd backend && npm start
+    region: oregon
+    plan: free
+    buildCommand: "npm install"
+    startCommand: "node server.js"
     envVars:
-      - key: SECRET_KEY
-        sync: false
       - key: GOOGLE_API_KEY
         sync: false
-      - key: CUSTOM_SEARCH_ENGINE_ID
+      - key: GOOGLE_CX
         sync: false
-    plan: free
