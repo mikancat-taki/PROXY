@@ -1,46 +1,65 @@
 // server.js
 import express from "express";
+import fetch from "node-fetch";
 import path from "path";
 import { fileURLToPath } from "url";
+import cors from "cors";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+app.use(cors());
+app.use(express.static("public"));
 
-// 現在のディレクトリを取得
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// JSONとURLエンコードを有効化
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// 🔹 Google検索API
+app.get("/api/search", async (req, res) => {
+  const query = req.query.q;
+  const apiKey = process.env.GOOGLE_API_KEY;
+  const cx = process.env.GOOGLE_CX;
 
-// 静的ファイルを提供（例: publicフォルダ）
-app.use(express.static(path.join(__dirname, "public")));
+  if (!query) return res.status(400).json({ error: "クエリが指定されていません。" });
+  if (!apiKey || !cx) return res.status(500).json({ error: "APIキーまたはCXが未設定です。" });
 
-// 🔐 ダミー暗号化API（encrypt.jsがない場合の代替）
-app.post("/api/encrypt", (req, res) => {
-  const { text } = req.body;
-  if (!text) return res.status(400).json({ error: "text が必要です" });
-
-  // Base64で疑似暗号化
-  const encoded = Buffer.from(text, "utf-8").toString("base64");
-  res.json({ encrypted: encoded });
+  try {
+    const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: "検索APIエラー", details: err.message });
+  }
 });
 
-// ✅ 動作確認用ルート
-app.get("/api/hello", (req, res) => {
-  res.json({ message: "✅ Server is running successfully on Render!" });
+// 🔹 強化版 Proxy
+app.get("/api/proxy", async (req, res) => {
+  const targetUrl = req.query.url;
+  if (!targetUrl) return res.status(400).json({ error: "URLが指定されていません。" });
+
+  try {
+    const response = await fetch(targetUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/141.0.0.0 Safari/537.36",
+        Accept: "*/*",
+      },
+    });
+    const contentType = response.headers.get("content-type") || "text/html";
+    res.setHeader("Content-Type", contentType);
+
+    const buffer = await response.arrayBuffer();
+    res.send(Buffer.from(buffer));
+  } catch (err) {
+    res.status(500).json({ error: "アクセス失敗", details: err.message });
+  }
 });
 
-// ルート（トップページ）
-app.get("/", (req, res) => {
+// 🔹 フロントエンド
+app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// サーバー起動
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
