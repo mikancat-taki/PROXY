@@ -1,30 +1,46 @@
-import express from 'express';
-import fetch from 'node-fetch';
-import path from 'path';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import { encryptURL, decryptURL } from './encrypt.js';
-import proxyHandler from './proxyHandler.js';
-
+// server.js
+import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+import dotenv from "dotenv";
 
 dotenv.config();
-
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// 現在のディレクトリを取得
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-app.use(cors());
-app.use(express.static(path.join(process.cwd(), '../frontend')));
-app.use('/assets', express.static(path.join(process.cwd(), '../assets')));
+// JSONとURLエンコードを有効化
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+// 静的ファイルを提供（例: publicフォルダ）
+app.use(express.static(path.join(__dirname, "public")));
 
-app.get('/api/proxy', proxyHandler);
+// 🔐 ダミー暗号化API（encrypt.jsがない場合の代替）
+app.post("/api/encrypt", (req, res) => {
+  const { text } = req.body;
+  if (!text) return res.status(400).json({ error: "text が必要です" });
 
-
-app.get('/', (req, res) => {
-res.sendFile(path.join(process.cwd(), '../frontend/index.html'));
+  // Base64で疑似暗号化
+  const encoded = Buffer.from(text, "utf-8").toString("base64");
+  res.json({ encrypted: encoded });
 });
 
+// ✅ 動作確認用ルート
+app.get("/api/hello", (req, res) => {
+  res.json({ message: "✅ Server is running successfully on Render!" });
+});
 
-app.listen(PORT, () => console.log(`🌐 Proxy running on http://localhost:${PORT}`));
+// ルート（トップページ）
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// サーバー起動
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
