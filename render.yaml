@@ -2,12 +2,10 @@ services:
   - type: web
     name: proxy-browser
     env: node
-    region: oregon
     plan: free
-    buildCommand: "npm install"
-    startCommand: "node server.js"
+    buildCommand: "npm install && npm run build"
+    startCommand: "npm run start"
     envVars:
       - key: GOOGLE_API_KEY
         sync: false
-      - key: GOOGLE_CX
-        sync: false
+      -
