@@ -1,132 +1,59 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Proxy Search Browser</title>
-  <link rel="icon" href="./icon.png" type="image/png" />
-  <style>
-    body {
-      font-family: "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #0a0a0a, #1a1a1a);
-      color: #f1f1f1;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    h1 {
-      margin-bottom: 1rem;
-      font-size: 2.2em;
-      letter-spacing: 0.05em;
-    }
-    #searchForm {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    input[type="text"] {
-      width: 300px;
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      outline: none;
-      font-size: 1em;
-    }
-    button {
-      padding: 10px 16px;
-      border: none;
-      border-radius: 8px;
-      background: #0078ff;
-      color: #fff;
-      cursor: pointer;
-      font-size: 1em;
-      transition: 0.3s;
-    }
-    button:hover {
-      background: #005fcc;
-    }
-    #results {
-      width: 90%;
-      max-width: 800px;
-      text-align: left;
-    }
-    .result {
-      background: #222;
-      border-radius: 12px;
-      padding: 15px;
-      margin: 10px 0;
-    }
-    .result a {
-      color: #4fa8ff;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    .result a:hover {
-      text-decoration: underline;
-    }
-    iframe {
-      width: 90%;
-      height: 500px;
-      border: none;
-      margin-top: 20px;
-      border-radius: 12px;
-      background: #fff;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proxy Search Browser</title>
+<link rel="icon" href="./icon.png" type="image/png">
+<style>
+body { font-family: "Segoe UI", sans-serif; background:#111; color:#fff; text-align:center; display:flex; flex-direction:column; align-items:center; min-height:100vh; margin:0; justify-content:center; }
+h1{margin-bottom:1rem;font-size:2.2em;}
+#searchForm{display:flex;gap:8px;justify-content:center;margin-bottom:20px;}
+input[type="text"]{width:300px;padding:10px;border-radius:8px;border:none;outline:none;font-size:1em;}
+button{padding:10px 16px;border:none;border-radius:8px;background:#0078ff;color:#fff;cursor:pointer;font-size:1em;transition:0.3s;}
+button:hover{background:#005fcc;}
+#results{width:90%;max-width:800px;text-align:left;}
+.result{background:#222;border-radius:12px;padding:15px;margin:10px 0;}
+.result a{color:#4fa8ff;text-decoration:none;font-weight:bold;}
+.result a:hover{text-decoration:underline;}
+iframe{width:90%;height:500px;border:none;margin-top:20px;border-radius:12px;background:#fff;display:none;}
+</style>
 </head>
 <body>
-  <h1>🔍 Proxy Search Browser</h1>
-  <form id="searchForm">
-    <input type="text" id="searchInput" placeholder="検索ワードを入力..." required />
-    <button type="submit">検索</button>
-  </form>
+<h1>🔍 Proxy Search Browser</h1>
+<form id="searchForm">
+<input type="text" id="searchInput" placeholder="検索ワードを入力..." required>
+<button type="submit">検索</button>
+</form>
+<div id="results"></div>
+<iframe id="previewFrame"></iframe>
+<script>
+const form=document.getElementById("searchForm");
+const input=document.getElementById("searchInput");
+const resultsDiv=document.getElementById("results");
+const frame=document.getElementById("previewFrame");
 
-  <div id="results"></div>
-  <iframe id="previewFrame" style="display:none;"></iframe>
+form.addEventListener("submit", async e=>{
+  e.preventDefault();
+  const q=input.value.trim();
+  if(!q)return;
+  resultsDiv.innerHTML="検索中...";
+  frame.style.display="none";
+  const res=await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+  const data=await res.json();
+  if(!data.items){resultsDiv.innerHTML="<p>結果が見つかりませんでした。</p>";return;}
+  resultsDiv.innerHTML=data.items.map(item=>`
+    <div class="result">
+      <a href="#" onclick="openProxy('${item.link}');return false;">${item.title}</a>
+      <p>${item.snippet}</p>
+    </div>`).join("");
+});
 
-  <script>
-    const form = document.getElementById("searchForm");
-    const input = document.getElementById("searchInput");
-    const resultsDiv = document.getElementById("results");
-    const frame = document.getElementById("previewFrame");
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const q = input.value.trim();
-      if (!q) return;
-      resultsDiv.innerHTML = "検索中...";
-      frame.style.display = "none";
-
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-      const data = await res.json();
-
-      if (!data.items) {
-        resultsDiv.innerHTML = "<p>結果が見つかりませんでした。</p>";
-        return;
-      }
-
-      resultsDiv.innerHTML = data.items
-        .map(
-          item => `
-          <div class="result">
-            <a href="#" onclick="openProxy('${item.link}');return false;">${item.title}</a>
-            <p>${item.snippet}</p>
-          </div>`
-        )
-        .join("");
-    });
-
-    async function openProxy(url) {
-      frame.src = `/api/proxy?url=${encodeURIComponent(url)}`;
-      frame.style.display = "block";
-      frame.scrollIntoView({ behavior: "smooth" });
-    }
-  </script>
+function openProxy(url){
+  frame.src=`/api/proxy?url=${encodeURIComponent(url)}`;
+  frame.style.display="block";
+  frame.scrollIntoView({behavior:"smooth"});
+}
+</script>
 </body>
 </html>
